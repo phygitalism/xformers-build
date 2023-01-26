@@ -1,0 +1,48 @@
+name: Build xformers package
+
+on: [workflow_dispatch]
+
+env:
+  XFORMERS_VERSION: 'v0.0.13'
+
+jobs:
+  example_matrix:
+    strategy:
+      matrix:
+        CUDA_MAJOR: ['11']
+        CUDA_MINOR: ['3']
+        CUDA_PATCH:  ['1']
+        PYTHON_VERSION: ['3.9', '3.8']
+
+    runs-on: ${{ matrix.CUDA_MAJOR }}.${{ matrix.CUDA_MINOR }}.${{ matrix.CUDA_PATCH }}-devel-ubuntu20.04 
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: facebookresearch/xformers
+          ref: ${{ env.XFORMERS_VERSION }}
+          path: xformers
+
+      - uses: actions/setup-python@v4 
+        with:
+          python-version: ${{ matrix.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - run: pip install twine ninja torch==1.12.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} torchvision==0.13.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} --extra-index-url https://download.pytorch.org/whl/cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }}
+
+      - name: Build 
+        working-directory: ./xformers
+        env:  
+          TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6+PTX"
+        run: python ./setup.py bdist_wheel
+
+      - name: Upload package
+        working-directory: ./xformers/dist
+        env:
+          TWINE_REPOSITORY_URL : ${{ secrets.PYPI_CUSTOM_URL }}
+          TWINE_USERNAME : ${{ secrets.PYPI_USER }}
+          TWINE_PASSWORD : ${{ secrets.PYPI_PASS }}
+        run: twine upload --skip-existing --non-interactive ./*.whl
+
+        
+      
