@@ -25,17 +25,17 @@ jobs:
           submodules: 'recursive'
 
       - run: |
-          apt update
-          apt install -y wget 
+          sudo apt update
+          sudo apt install -y wget 
       
       - name: Install cuda-toolkit
         run: |
           wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
-          dpkg -i cuda-keyring_1.0-1_all.deb
-          apt update
+          sudo dpkg -i cuda-keyring_1.0-1_all.deb
+          sudo apt update
 
       - run: |
-          apt install -y cudart-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cuxxfilt-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvcc-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvml_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvprune-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvrtc_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} thrust-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cublas_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cufft_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} curand_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cusolver_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cusparse_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} npp_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} occupancy_calculator-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }}
+          sudo apt install -y cudart-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cuxxfilt-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvcc-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvml_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvprune-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvrtc_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} thrust-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cublas_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cufft_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} curand_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cusolver_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cusparse_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} npp_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} occupancy_calculator-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }}
           
       - uses: actions/setup-python@v4
         id: python
