@@ -29,11 +29,12 @@ jobs:
           apt update
           apt install -y lsb-release 
 
-      - uses: actions/setup-python@v4 
+      - uses: actions/setup-python@v4
+        id: python
         with:
           python-version: ${{ matrix.PYTHON_VERSION }}
 
-      - run: pip install twine ninja torch==1.12.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} torchvision==0.13.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} --extra-index-url https://download.pytorch.org/whl/cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }}
+      - run: ${{ env.pythonLocation }}/pip install twine ninja torch==1.12.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} torchvision==0.13.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} --extra-index-url https://download.pytorch.org/whl/cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }}
 
       - name: Build 
         working-directory: ./xformers
