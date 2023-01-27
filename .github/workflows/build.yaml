@@ -23,15 +23,20 @@ jobs:
           ref: ${{ env.XFORMERS_VERSION }}
           path: xformers
           submodules: 'recursive'
-          
-      - uses: Jimver/cuda-toolkit@v0.2.8
-        id: cuda-toolkit
-        with:
-          cuda: '${{ matrix.CUDA_MAJOR}}.${{ matrix.CUDA_MINOR }}.${{ matrix.CUDA_PATCH }}'
-          method: 'network'
-          sub-packages: '["cudart", "cuxxfilt", "nvcc", "nvml_dev", "nvprune", "nvrtc_dev", "thrust", "cublas_dev", "cufft_dev", "curand_dev", "cusolver_dev", "cusparse_dev", "npp_dev", "occupancy_calculator"]'
-        
 
+      - run: |
+          apt update
+          apt install -y wget 
+      
+      - name: Install cuda-toolkit
+        run: |
+          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
+          dpkg -i cuda-keyring_1.0-1_all.deb
+          apt update
+
+      - run: |
+          apt install -y cudart-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cuxxfilt-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvcc-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvml_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvprune-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvrtc_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} thrust-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cublas_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cufft_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} curand_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cusolver_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cusparse_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} npp_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} occupancy_calculator-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }}
+          
       - uses: actions/setup-python@v4
         id: python
         with:
@@ -44,7 +49,11 @@ jobs:
         working-directory: ./xformers
         env:  
           TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6+PTX"
-        run: python ./setup.py bdist_wheel
+          CUDA_VERSION: ${{ matrix.CUDA_MAJOR}}.${{ matrix.CUDA_MINOR }}
+        run: |
+          export PATH=/usr/local/cuda-${{ env.CUDA_VERSION }}/bin${PATH:+:${PATH}}
+          export LD_LIBRARY_PATH=/usr/local/cuda-${{ env.CUDA_VERSION }}/lib64\${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}
+          python ./setup.py bdist_wheel
 
       - name: Upload package
         working-directory: ./xformers/dist
