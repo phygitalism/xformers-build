@@ -1,6 +1,6 @@
 name: Build xformers package
 
-on: [workflow_dispatch]
+on: [workflow_dispatch, push]
 
 env:
   XFORMERS_VERSION: 'v0.0.13'
@@ -21,47 +21,42 @@ jobs:
     container: nvidia/cuda:${{ matrix.CUDA_MAJOR }}.${{ matrix.CUDA_MINOR }}.${{ matrix.CUDA_PATCH}}-devel-ubuntu20.04
     
     steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: facebookresearch/xformers
-          ref: ${{ env.XFORMERS_VERSION }}
-          path: xformers
-          submodules: 'recursive'
-
       - run: |
           apt update && \
-          apt install -y --no-install-recommends  ca-certificates wget
+          apt install -y --no-install-recommends  ca-certificates wget git
+
+      - run: |
+          git clone -b ${{ env.XFORMERS_VERSION }} https://github.com/facebookresearch/xformers.git
+          cd ./xformers
+          git submodule update --init --recursive
       
       
       - name: Install miniconda
         env: 
-          CONDA_VERSION: py${{ env.PYTHON_MAJOR}}${{ env.PYTHON_MINOR }}_22.11.1-1
-
+          CONDA_VERSION: py${{ matrix.PYTHON_MAJOR}}${{ matrix.PYTHON_MINOR }}_22.11.1-1
         run: |
-          wget -q -O ./miniconda.sh http://repo.continuum.io/miniconda/Miniconda3-${CONDA_VERSION}-Linux-x86_64.sh \
-          bash ./miniconda.sh -bfp ${{ env.CONDA_DIR }} \
+          wget -q -O ./miniconda.sh http://repo.continuum.io/miniconda/Miniconda3-${{ env.CONDA_VERSION}}-Linux-x86_64.sh
+          bash ./miniconda.sh -bfp ${{ env.CONDA_DIR }}
           rm ./miniconda.sh
+          echo  PATH=${{ env.CONDA_DIR}}/bin:$PATH >> $GITHUB_ENV
     
       - name: Install torch
-        env:
-          PATH: ${{ env.CONDA_DIR}}/bin:$PATH
         run: pip install twine ninja torch==1.12.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} torchvision==0.13.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} --extra-index-url https://download.pytorch.org/whl/cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }}
 
       - name: Build 
         working-directory: ./xformers
         env:  
           TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6+PTX"
+          FORCE_CUDA: '1'
           CUDA_VERSION: ${{ matrix.CUDA_MAJOR}}.${{ matrix.CUDA_MINOR }}
-          PATH: ${{ env.CONDA_DIR}}/bin:$PATH
         run: python ./setup.py bdist_wheel
 
       - name: Upload package
         working-directory: ./xformers/dist
         env:
-          TWINE_REPOSITORY_URL : ${{ secrets.PYPI_CUSTOM_URL }}
+          TWINE_REPOSITORY_URL : ${{ secrets.PYPI_PROD_URL }}
           TWINE_USERNAME : ${{ secrets.PYPI_USER }}
           TWINE_PASSWORD : ${{ secrets.PYPI_PASS }}
-          PATH: ${{ env.CONDA_DIR}}/bin:$PATH
         run: twine upload --skip-existing --non-interactive ./*.whl
 
         
