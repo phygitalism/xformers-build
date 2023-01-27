@@ -4,6 +4,7 @@ on: [workflow_dispatch]
 
 env:
   XFORMERS_VERSION: 'v0.0.13'
+  CONDA_DIR: /opt/conda
 
 jobs:
   example_matrix:
@@ -12,9 +13,12 @@ jobs:
         CUDA_MAJOR: ['11']
         CUDA_MINOR: ['3']
         CUDA_PATCH:  ['1']
-        PYTHON_VERSION: ['3.9', '3.8']
+        PYTHON_MAJOR: ['3']
+        PYTHON_MINOR: ['8', '9']
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
+    
+    container: nvidia/cuda:${{ matrix.CUDA_MAJOR }}.${{ matrix.CUDA_MINOR }}.${{ matrix.CUDA_PATCH}}-devel-ubuntu20.04
     
     steps:
       - uses: actions/checkout@v3
@@ -25,35 +29,31 @@ jobs:
           submodules: 'recursive'
 
       - run: |
-          sudo apt update
-          sudo apt install -y wget 
+          apt update && \
+          apt install -y --no-install-recommends  ca-certificates wget
       
-      - name: Install cuda-toolkit
-        run: |
-          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
-          sudo dpkg -i cuda-keyring_1.0-1_all.deb
-          sudo apt update
+      
+      - name: Install miniconda
+        env: 
+          CONDA_VERSION: py${{ env.PYTHON_MAJOR}}${{ env.PYTHON_MINOR }}_22.11.1-1
 
-      - run: |
-          sudo apt install -y cudart-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cuxxfilt-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvcc-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvml_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvprune-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} nvrtc_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} thrust-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cublas_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cufft_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} curand_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cusolver_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} cusparse_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} npp_dev-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }} occupancy_calculator-${{ matrix.CUDA_MAJOR}}-${{ matrix.CUDA_MINOR }}
-          
-      - uses: actions/setup-python@v4
-        id: python
-        with:
-          python-version: ${{ matrix.PYTHON_VERSION }}
-          cache: 'pip' 
-          
-      - run: pip install twine ninja torch==1.12.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} torchvision==0.13.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} --extra-index-url https://download.pytorch.org/whl/cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }}
+        run: |
+          wget -q -O ./miniconda.sh http://repo.continuum.io/miniconda/Miniconda3-${CONDA_VERSION}-Linux-x86_64.sh \
+          bash ./miniconda.sh -bfp ${{ env.CONDA_DIR }} \
+          rm ./miniconda.sh
+    
+      - name: Install torch
+        env:
+          PATH: ${{ env.CONDA_DIR}}/bin:$PATH
+        run: pip install twine ninja torch==1.12.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} torchvision==0.13.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} --extra-index-url https://download.pytorch.org/whl/cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }}
 
       - name: Build 
         working-directory: ./xformers
         env:  
           TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6+PTX"
           CUDA_VERSION: ${{ matrix.CUDA_MAJOR}}.${{ matrix.CUDA_MINOR }}
-        run: |
-          export PATH=/usr/local/cuda-${{ env.CUDA_VERSION }}/bin${PATH:+:${PATH}}
-          export LD_LIBRARY_PATH=/usr/local/cuda-${{ env.CUDA_VERSION }}/lib64\${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}
-          python ./setup.py bdist_wheel
+          PATH: ${{ env.CONDA_DIR}}/bin:$PATH
+        run: python ./setup.py bdist_wheel
 
       - name: Upload package
         working-directory: ./xformers/dist
@@ -61,6 +61,7 @@ jobs:
           TWINE_REPOSITORY_URL : ${{ secrets.PYPI_CUSTOM_URL }}
           TWINE_USERNAME : ${{ secrets.PYPI_USER }}
           TWINE_PASSWORD : ${{ secrets.PYPI_PASS }}
+          PATH: ${{ env.CONDA_DIR}}/bin:$PATH
         run: twine upload --skip-existing --non-interactive ./*.whl
 
         
