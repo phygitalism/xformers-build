@@ -27,7 +27,7 @@ jobs:
       - uses: Jimver/cuda-toolkit@v0.2.8
         id: cuda-toolkit
         with:
-          cuda: '${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }}.${{ matrix.CUDA_PATCH }}'
+          cuda: '${{ matrix.CUDA_MAJOR}}.${{ matrix.CUDA_MINOR }}.${{ matrix.CUDA_PATCH }}'
           network: 'network'
           sub-packages: '["cudart", "cuxxfilt", "nvcc", "nvml_dev", "nvprune", "nvrtc_dev", "thrust", "cublas_dev", "cufft_dev", "curand_dev", "cusolver_dev", "cusparse_dev", "npp_dev", "occupancy_calculator"]'
         
