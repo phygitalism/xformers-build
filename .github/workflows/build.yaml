@@ -23,6 +23,11 @@ jobs:
           repository: facebookresearch/xformers
           ref: ${{ env.XFORMERS_VERSION }}
           path: xformers
+          
+      - name: Install lsb-release
+        run: |
+          sudo apt update
+          sudo apt install -y lsb-release 
 
       - uses: actions/setup-python@v4 
         with:
