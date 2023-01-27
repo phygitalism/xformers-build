@@ -27,14 +27,18 @@ jobs:
       - name: Install lsb-release
         run: |
           apt update
-          apt install -y lsb-release 
+          apt install -y lsb-release curl
 
       - uses: actions/setup-python@v4
         id: python
         with:
           python-version: ${{ matrix.PYTHON_VERSION }}
+          
+      - run: |
+          curl -O https://bootstrap.pypa.io/get-pip.py
+          python ./get-pip.py
 
-      - run: ${{ env.pythonLocation }}/bin/pip install twine ninja torch==1.12.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} torchvision==0.13.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} --extra-index-url https://download.pytorch.org/whl/cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }}
+      - run: pip install twine ninja torch==1.12.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} torchvision==0.13.1+cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }} --extra-index-url https://download.pytorch.org/whl/cu${{ matrix.CUDA_MAJOR}}${{ matrix.CUDA_MINOR }}
 
       - name: Build 
         working-directory: ./xformers
