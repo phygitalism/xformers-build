@@ -3,7 +3,6 @@ name: Build xformers package
 on: [workflow_dispatch, push]
 
 env:
-  XFORMERS_VERSION: 'v0.0.13'
   CONDA_DIR: /opt/conda
 
 jobs:
@@ -28,7 +27,7 @@ jobs:
           apt install -y --no-install-recommends  ca-certificates wget git
 
       - run: |
-          git clone -b ${{ env.XFORMERS_VERSION }} https://github.com/facebookresearch/xformers.git
+          git clone -b ${{ matrix.XFORMERS_VERSION }} https://github.com/facebookresearch/xformers.git
           cd ./xformers
           git submodule update --init --recursive
       
