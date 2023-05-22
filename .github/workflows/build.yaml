@@ -13,8 +13,8 @@ jobs:
         CUDA_MINOR: ['3']
         CUDA_PATCH:  ['1']
         PYTHON_MAJOR: ['3']
-        PYTHON_MINOR: ['8', '9']
-        XFORMERS_VERSION: ['v0.0.17', 'v0.0.18']
+        PYTHON_MINOR: ['9']
+        XFORMERS_VERSION: ['v0.0.19']
         PYTORCH_VERSION: ['1.12.1']
 
     runs-on: ubuntu-latest
